@@ -1,14 +1,17 @@
 FROM alpine:latest
 
-ENV DOCKERIZE_VERSION v0.2.0
+COPY --from=golang:1.13-alpine /usr/local/go/ /usr/local/go/
+ENV PATH="/usr/local/go/bin:${PATH}"
 
 # Lsyncd
-RUN apk add --no-cache lsyncd bash
+RUN apk add --no-cache lsyncd bash git
 
-# Dockerize
-RUN apk add --no-cache wget \
- && wget --no-check-certificate https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
- && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+RUN git clone https://github.com/jwilder/dockerize \
+ && cd dockerize \
+ && go build \
+ && ls | grep -v '.go' \
+ && chmod +x dockerize \
+ && mv dockerize /usr/bin/
 
 # Entrypoint to easily enter in the container and run additionnal scripts on startup
 COPY ./lsyncd-entrypoint.sh /
